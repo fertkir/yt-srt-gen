@@ -8,15 +8,14 @@ from whisper.transcribe import cli as whisper_cli
 from yt_dlp import YoutubeDL
 
 
-def download_video(url):
-    ydl_opts = {'format': 'bestvideo+bestaudio/best'}
-    with YoutubeDL(ydl_opts) as ydl:
+def download_video(url: str, ydl_format: str):
+    with YoutubeDL({'format': ydl_format}) as ydl:
         info_dict = ydl.extract_info(url, download=True)
         video_path = ydl.prepare_filename(info_dict)
     return video_path
 
 
-def generate_srt(video_path):
+def generate_srt(video_path, model: str, device: str, lang: str, output_format: str):
     srt_filepath = Path(video_path).with_suffix(".srt")
     if srt_filepath.exists():
         print(str(srt_filepath) + " already exists, skipping the step")
@@ -25,9 +24,10 @@ def generate_srt(video_path):
         try:
             sys.argv = [
                 "whisper", video_path,
-                "--device", "cpu",
-                "--language", "Serbian",
-                "--output_format", "srt",
+                "--model", model,
+                "--device", device,
+                "--language", lang,
+                "--output_format", output_format,
             ]
             whisper_cli()
         finally:
@@ -35,7 +35,7 @@ def generate_srt(video_path):
     return srt_filepath
 
 
-async def append_english_translation(input_file: str, output_file: str):
+async def append_english_translation(input_file: str, output_file: str, source_lang: str, target_lang: str):
     translator = Translator()
 
     with open(input_file, 'r', encoding='utf-8') as f:
@@ -47,7 +47,7 @@ async def append_english_translation(input_file: str, output_file: str):
         new_lines.append(line)  # keep original line
         # Only translate lines that are not empty, numbers, or timestamps
         if stripped and not stripped.isdigit() and "-->" not in stripped:
-            translated = (await translator.translate(stripped, src='sr', dest='en')).text
+            translated = (await translator.translate(stripped, src=source_lang, dest=target_lang)).text
             new_lines.append(translated + '\n')  # append translation
 
     with open(output_file, 'w', encoding='utf-8') as f:
@@ -57,17 +57,26 @@ async def append_english_translation(input_file: str, output_file: str):
 def main():
     parser = argparse.ArgumentParser(description="Download YouTube video and generate translated subtitles.")
     parser.add_argument("url", help="YouTube video URL")
-    parser.add_argument("--model", default="base", help="Whisper model to use (tiny, base, small, medium, large)")
-    args = parser.parse_args()
+    parser.add_argument("--ydl-format", default="bestvideo+bestaudio/best", help="format for yt-dlp")
+    parser.add_argument("--model", default="turbo", help="name of the Whisper model to use")
+    parser.add_argument("--device", default="cpu", help="Processor to use for OpenAI Whisper to run (cpu, cuda)")
+    parser.add_argument("--source-language", default="sr", help="language spoken in the audio, specify None to perform language detection")
+    parser.add_argument("--target-language", default="en", help="language for translated subtitles")
+    parser.add_argument("--output-format", "-f", default="srt", choices=["txt", "vtt", "srt", "tsv", "json", "all"], help="format of the output file")
+    args = parser.parse_args().__dict__
 
     print("\n[+] Downloading video...")
-    video_path = download_video(args.url)
+    video_path = download_video(args["url"], args["ydl_format"])
 
     print("\n[+] Generating subtitles...")
-    srt_path = generate_srt(video_path)
+    srt_path = generate_srt(video_path, args["model"], args["device"], args["source_language"], args["output_format"])
 
-    print("[+] Translating subtitles to English...")
+    print("[+] Translating subtitles...")
     translated_srt_path = Path(srt_path).with_suffix(".txt")
-    asyncio.run(append_english_translation(str(srt_path), str(translated_srt_path)))
+    asyncio.run(append_english_translation(
+        str(srt_path),
+        str(translated_srt_path),
+        args["source_language"],
+        args["target_language"]))
 
     print(f"[+] Done! Translated subtitles saved as: {translated_srt_path}")
