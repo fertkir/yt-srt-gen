@@ -36,12 +36,43 @@ def generate_srt(video_path, model: str, device: str, lang: str, output_format: 
     return srt_filepath
 
 
-async def append_english_translation(input_file: str, output_file: str,
-                                     source_lang: str, target_lang: str):
+def has_translation_block(lines):
+    """
+    Returns True if there are multiple subtitle lines
+    after the first timestamp.
+    """
+    after_timestamp = False
+    text_lines = 0
+
+    for line in lines:
+        stripped = line.strip()
+
+        if "-->" in stripped:
+            after_timestamp = True
+            continue
+
+        if after_timestamp:
+            if not stripped:
+                break  # end of subtitle block
+
+            if not stripped.isdigit():
+                text_lines += 1
+
+            if text_lines > 1:
+                return True  # already translated
+
+    return False
+
+
+async def append_english_translation(srt_file: str, source_lang: str, target_lang: str):
     translator = Translator()
 
-    with open(input_file, 'r', encoding='utf-8') as f:
+    with open(srt_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
+
+    if has_translation_block(lines):
+        print("Detected translated subtitles — skipping")
+        return
 
     new_lines = []
 
@@ -55,7 +86,7 @@ async def append_english_translation(input_file: str, output_file: str,
                 new_lines.append(translated + '\n')
             pbar.update(1)
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(srt_file, 'w', encoding='utf-8') as f:
         f.writelines(new_lines)
 
 
@@ -65,9 +96,11 @@ def main():
     parser.add_argument("--ydl-format", default="bestvideo+bestaudio/best", help="format for yt-dlp")
     parser.add_argument("--model", default="turbo", help="name of the Whisper model to use")
     parser.add_argument("--device", default="cpu", help="Processor to use for OpenAI Whisper to run (cpu, cuda)")
-    parser.add_argument("--source-language", default="sr", help="language spoken in the audio, specify None to perform language detection")
+    parser.add_argument("--source-language", default="sr",
+                        help="language spoken in the audio, specify None to perform language detection")
     parser.add_argument("--target-language", default="en", help="language for translated subtitles")
-    parser.add_argument("--output-format", "-f", default="srt", choices=["txt", "vtt", "srt", "tsv", "json", "all"], help="format of the output file")
+    parser.add_argument("--output-format", "-f", default="srt", choices=["txt", "vtt", "srt", "tsv", "json", "all"],
+                        help="format of the output file")
     args = parser.parse_args().__dict__
 
     print("\n[+] Downloading video...")
@@ -77,11 +110,9 @@ def main():
     srt_path = generate_srt(video_path, args["model"], args["device"], args["source_language"], args["output_format"])
 
     print("[+] Translating subtitles...")
-    translated_srt_path = Path(srt_path).with_suffix(".txt")
     asyncio.run(append_english_translation(
         str(srt_path),
-        str(translated_srt_path),
         args["source_language"],
         args["target_language"]))
 
-    print(f"[+] Done! Translated subtitles saved as: {translated_srt_path}")
+    print(f"[+] Done! Translated subtitles saved as: {srt_path}")
