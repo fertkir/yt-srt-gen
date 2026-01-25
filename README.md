@@ -14,13 +14,13 @@
 You can install `yt-srt-gen` via `pip`:
 
 ```bash
-pip install git+https://github.com/yourusername/yt-srt-gen.git
+pip install git+https://github.com/fertkir/yt-srt-gen.git
 ```
 
 Or clone the repository and install manually:
 
 ```bash
-git clone https://github.com/yourusername/yt-srt-gen.git
+git clone https://github.com/fertkir/yt-srt-gen.git
 cd yt-srt-gen
 pip install .
 ```

@@ -17,6 +17,9 @@ dependencies = [
 [project.scripts]
 yt-srt-gen = "yt_srt_gen.cli:main"
 
+[project.urls]
+Repository = "https://github.com/fertkir/yt-srt-gen"
+
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
