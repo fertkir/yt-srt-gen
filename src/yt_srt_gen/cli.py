@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from googletrans import Translator
+from tqdm import tqdm
 from whisper.transcribe import cli as whisper_cli
 from yt_dlp import YoutubeDL
 
@@ -35,20 +36,24 @@ def generate_srt(video_path, model: str, device: str, lang: str, output_format: 
     return srt_filepath
 
 
-async def append_english_translation(input_file: str, output_file: str, source_lang: str, target_lang: str):
+async def append_english_translation(input_file: str, output_file: str,
+                                     source_lang: str, target_lang: str):
     translator = Translator()
 
     with open(input_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
     new_lines = []
-    for line in lines:
-        stripped = line.strip()
-        new_lines.append(line)  # keep original line
-        # Only translate lines that are not empty, numbers, or timestamps
-        if stripped and not stripped.isdigit() and "-->" not in stripped:
-            translated = (await translator.translate(stripped, src=source_lang, dest=target_lang)).text
-            new_lines.append(translated + '\n')  # append translation
+
+    with tqdm(total=len(lines), desc="Translating") as pbar:
+        for line in lines:
+            stripped = line.strip()
+            new_lines.append(line)  # keep original line
+            # Only translate lines that are not empty, numbers, or timestamps
+            if stripped and not stripped.isdigit() and "-->" not in stripped:
+                translated = (await translator.translate(stripped, src=source_lang, dest=target_lang)).text
+                new_lines.append(translated + '\n')
+            pbar.update(1)
 
     with open(output_file, 'w', encoding='utf-8') as f:
         f.writelines(new_lines)
