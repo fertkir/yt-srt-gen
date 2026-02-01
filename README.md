@@ -37,17 +37,19 @@ yt-srt-gen <YouTube URL> [OPTIONS]
 
 ### Options
 
-* `--ydl-format`: Format for `yt-dlp` (default: `bestvideo+bestaudio/best`).
-* `--model`: Whisper model to use (default: `turbo`).
-* `--device`: Device for Whisper (`cpu` or `cuda`, default: `cpu`).
-* `--source-language`: Language spoken in the audio (default: `sr`).
-* `--target-language`: Language for translated subtitles (default: `en`).
+* `--source-language`, `-s`: Language spoken in the audio.
+* `--target-language`, `-t`: Language for translated subtitles.
 * `--output-format`, `-f`: Subtitle output format (`txt`, `vtt`, `srt`, `tsv`, `json`, `all`, default: `srt`).
+* `--whisper-args`, `-w`: Additional arguments to pass to openai-whisper.
 
-### Example
+### Examples
 
 ```bash
 yt-srt-gen https://www.youtube.com/watch?v=dQw4w9WgXcQ --source-language es --target-language en --output-format srt
+```
+
+```bash
+yt-srt-gen https://www.youtube.com/watch?v=dQw4w9WgXcQ -s sr -t en -w "--model small --fp16 False"
 ```
 
 This will download the video, generate Spanish subtitles, and append English translations.

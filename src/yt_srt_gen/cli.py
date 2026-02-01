@@ -1,22 +1,24 @@
 import argparse
 import asyncio
+import shlex
 import sys
 from pathlib import Path
 
-from googletrans import Translator
+import googletrans
 from tqdm import tqdm
+from whisper.tokenizer import LANGUAGES
 from whisper.transcribe import cli as whisper_cli
 from yt_dlp import YoutubeDL
 
 
-def download_video(url: str, ydl_format: str):
-    with YoutubeDL({'format': ydl_format}) as ydl:
+def download_video(url: str):
+    with YoutubeDL() as ydl:
         info_dict = ydl.extract_info(url, download=True)
         video_path = ydl.prepare_filename(info_dict)
     return video_path
 
 
-def generate_srt(video_path, model: str, device: str, lang: str, output_format: str):
+def generate_srt(video_path, lang: str, output_format: str, whisper_args: list[str]):
     srt_filepath = Path(video_path).with_suffix(".srt")
     if srt_filepath.exists():
         print(str(srt_filepath) + " already exists, skipping the step")
@@ -25,11 +27,9 @@ def generate_srt(video_path, model: str, device: str, lang: str, output_format: 
         try:
             sys.argv = [
                 "whisper", video_path,
-                "--model", model,
-                "--device", device,
                 "--language", lang,
                 "--output_format", output_format,
-            ]
+            ] + whisper_args
             whisper_cli()
         finally:
             sys.argv = old_argv
@@ -65,7 +65,7 @@ def has_translation_block(lines):
 
 
 async def append_english_translation(srt_file: str, source_lang: str, target_lang: str):
-    translator = Translator()
+    translator = googletrans.Translator()
 
     with open(srt_file, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -93,22 +93,24 @@ async def append_english_translation(srt_file: str, source_lang: str, target_lan
 def main():
     parser = argparse.ArgumentParser(description="Download YouTube video and generate translated subtitles.")
     parser.add_argument("url", help="YouTube video URL")
-    parser.add_argument("--ydl-format", default="bestvideo+bestaudio/best", help="format for yt-dlp")
-    parser.add_argument("--model", default="turbo", help="name of the Whisper model to use")
-    parser.add_argument("--device", default="cpu", choices=["cpu", "cuda"],
-                        help="Processor to use for OpenAI Whisper to run")
-    parser.add_argument("--source-language", default="sr",
-                        help="language spoken in the audio, specify None to perform language detection")
-    parser.add_argument("--target-language", default="en", help="language for translated subtitles")
-    parser.add_argument("--output-format", "-f", default="srt", choices=["txt", "vtt", "srt", "tsv", "json", "all"],
+    parser.add_argument("--source-language", "-s", required=True,
+                        choices=sorted(LANGUAGES.keys()),
+                        help="Language spoken in the audio")
+    parser.add_argument("--target-language", "-t", required=True,
+                        choices=sorted(googletrans.LANGUAGES.keys()),
+                        help="Language for translated subtitles")
+    parser.add_argument("--output-format", "-f", default="srt",
+                        choices=["txt", "vtt", "srt", "tsv", "json", "all"],
                         help="format of the output file")
+    parser.add_argument("--whisper-args", "-w", default="",
+                        help="Additional arguments to pass to openai-whisper")
     args = parser.parse_args().__dict__
 
     print("\n[+] Downloading video...")
-    video_path = download_video(args["url"], args["ydl_format"])
+    video_path = download_video(args["url"])
 
     print("\n[+] Generating subtitles...")
-    srt_path = generate_srt(video_path, args["model"], args["device"], args["source_language"], args["output_format"])
+    srt_path = generate_srt(video_path, args["source_language"], args["output_format"], shlex.split(args["whisper_args"]))
 
     print("[+] Translating subtitles...")
     asyncio.run(append_english_translation(
