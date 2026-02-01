@@ -112,7 +112,7 @@ def main():
     print("\n[+] Generating subtitles...")
     srt_path = generate_srt(video_path, args["source_language"], args["output_format"], shlex.split(args["whisper_args"]))
 
-    print("[+] Translating subtitles...")
+    print("\n[+] Translating subtitles...")
     asyncio.run(append_english_translation(
         str(srt_path),
         args["source_language"],

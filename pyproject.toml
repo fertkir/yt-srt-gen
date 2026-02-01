@@ -1,7 +1,7 @@
 [project]
 name = "yt-srt-gen"
 description = "Download YouTube videos, generate and translate subtitles"
-version = "0.1.3"
+version = "0.1.4"
 readme = "README.md"
 license = { text = "GPL-3.0-or-later" }
 authors = [
