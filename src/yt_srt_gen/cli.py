@@ -118,4 +118,4 @@ def main():
         args["source_language"],
         args["target_language"]))
 
-    print(f"[+] Done! Translated subtitles saved as: {srt_path}")
+    print(f"\n[+] Done! Translated subtitles saved as: {srt_path}")
