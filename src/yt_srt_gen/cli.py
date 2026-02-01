@@ -95,7 +95,8 @@ def main():
     parser.add_argument("url", help="YouTube video URL")
     parser.add_argument("--ydl-format", default="bestvideo+bestaudio/best", help="format for yt-dlp")
     parser.add_argument("--model", default="turbo", help="name of the Whisper model to use")
-    parser.add_argument("--device", default="cpu", help="Processor to use for OpenAI Whisper to run (cpu, cuda)")
+    parser.add_argument("--device", default="cpu", choices=["cpu", "cuda"],
+                        help="Processor to use for OpenAI Whisper to run")
     parser.add_argument("--source-language", default="sr",
                         help="language spoken in the audio, specify None to perform language detection")
     parser.add_argument("--target-language", default="en", help="language for translated subtitles")
