@@ -22,8 +22,8 @@ def download_video(url: str, workdir: Path | None):
     return video_path
 
 
-def generate_srt(video_path: Path, lang: str, output_format: str, whisper_args: list[str]):
-    srt_filepath = video_path.with_suffix(".srt")
+def generate_srt(video_path: str, lang: str, output_format: str, whisper_args: list[str]):
+    srt_filepath = Path(video_path).with_suffix(".srt")
     if srt_filepath.exists():
         print(str(srt_filepath) + " already exists, skipping the step")
     else:
@@ -35,7 +35,7 @@ def generate_srt(video_path: Path, lang: str, output_format: str, whisper_args: 
                 "--language",
                 lang,
                 "--output_dir",
-                video_path.parent,
+                str(Path(video_path).parent),
                 "--output_format",
                 output_format,
             ] + whisper_args
@@ -140,7 +140,7 @@ def main():
 
     print("\n[+] Generating subtitles...")
     srt_path = generate_srt(
-        Path(video_path),
+        video_path,
         args["source_language"],
         args["output_format"],
         shlex.split(args["whisper_args"]),
