@@ -1,5 +1,6 @@
-.idea
-*.iml
+.idea/*
+!.idea/*.iml
+!.idea/modules.xml
 .venv
 *.egg-info
 build
