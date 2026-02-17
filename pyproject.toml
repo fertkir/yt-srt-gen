@@ -8,10 +8,16 @@ authors = [
     { name = "Kirill Fertikov", email = "kirill.fertikov@gmail.com" }
 ]
 dependencies = [
-    "yt-dlp==2026.01.31",
+    "yt-dlp==2026.2.4",
     "openai-whisper==20250625",
     "googletrans==4.0.2",
-    "tqdm==4.67.1"
+    "tqdm==4.67.3"
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "black",
 ]
 
 [project.scripts]
@@ -23,3 +29,6 @@ Repository = "https://github.com/fertkir/yt-srt-gen"
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 120
