@@ -15,15 +15,15 @@ from yt_dlp.utils import DEFAULT_OUTTMPL
 def download_video(url: str, workdir: Path | None):
     ydl_opts = {}
     if workdir:
-        ydl_opts["outtmpl"] = {'default': str(workdir / DEFAULT_OUTTMPL['default'])}
+        ydl_opts["outtmpl"] = {"default": str(workdir / DEFAULT_OUTTMPL["default"])}
     with YoutubeDL(ydl_opts) as ydl:
         info_dict = ydl.extract_info(url, download=True)
         video_path = ydl.prepare_filename(info_dict)
     return video_path
 
 
-def generate_srt(video_path, lang: str, output_format: str, whisper_args: list[str]):
-    srt_filepath = Path(video_path).with_suffix(".srt")
+def generate_srt(video_path: Path, lang: str, output_format: str, whisper_args: list[str]):
+    srt_filepath = video_path.with_suffix(".srt")
     if srt_filepath.exists():
         print(str(srt_filepath) + " already exists, skipping the step")
     else:
@@ -34,6 +34,8 @@ def generate_srt(video_path, lang: str, output_format: str, whisper_args: list[s
                 video_path,
                 "--language",
                 lang,
+                "--output_dir",
+                video_path.parent,
                 "--output_format",
                 output_format,
             ] + whisper_args
@@ -138,7 +140,7 @@ def main():
 
     print("\n[+] Generating subtitles...")
     srt_path = generate_srt(
-        video_path,
+        Path(video_path),
         args["source_language"],
         args["output_format"],
         shlex.split(args["whisper_args"]),
