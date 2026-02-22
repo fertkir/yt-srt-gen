@@ -1,13 +1,11 @@
 import argparse
 import asyncio
 import shlex
-import sys
+import subprocess
 from pathlib import Path
 
 import googletrans
 from tqdm import tqdm
-from whisper.tokenizer import LANGUAGES
-from whisper.transcribe import cli as whisper_cli
 from yt_dlp import YoutubeDL
 from yt_dlp.utils import DEFAULT_OUTTMPL
 
@@ -27,9 +25,8 @@ def generate_srt(video_path: str, lang: str, output_format: str, whisper_args: l
     if srt_filepath.exists():
         print(str(srt_filepath) + " already exists, skipping the step")
     else:
-        old_argv = sys.argv.copy()
-        try:
-            sys.argv = [
+        subprocess.run(
+            [
                 "whisper",
                 video_path,
                 "--language",
@@ -38,10 +35,9 @@ def generate_srt(video_path: str, lang: str, output_format: str, whisper_args: l
                 str(Path(video_path).parent),
                 "--output_format",
                 output_format,
-            ] + whisper_args
-            whisper_cli()
-        finally:
-            sys.argv = old_argv
+            ] + whisper_args,
+            check=True,
+        )
     return srt_filepath
 
 
@@ -110,8 +106,7 @@ def main():
         "--source-language",
         "-s",
         required=True,
-        choices=sorted(LANGUAGES.keys()),
-        help="Language spoken in the audio",
+        help="Language spoken in the audio. For the list of supported languages: whisper -h | grep language",
     )
     parser.add_argument(
         "--target-language",

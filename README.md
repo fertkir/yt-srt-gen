@@ -1,6 +1,6 @@
 # yt-srt-gen
 
-`yt-srt-gen` is a Python tool for downloading YouTube videos, generating subtitles using OpenAI Whisper, and translating them into another language (e.g., English) automatically.
+`yt-srt-gen` is a tool for downloading YouTube videos, generating subtitles using OpenAI Whisper, and translating them into another language (e.g., English) automatically.
 
 ## Features
 
@@ -11,19 +11,15 @@
 
 ## Installation
 
-You can install `yt-srt-gen` via `pip`:
-
 ```bash
-pip install git+https://github.com/fertkir/yt-srt-gen.git
+pip install yt-srt-gen
 ```
-
-Or clone the repository and install manually:
-
+Install `openai-whisper` if not installed. 
 ```bash
-git clone https://github.com/fertkir/yt-srt-gen.git
-cd yt-srt-gen
-pip install .
+pip install openai-whisper
 ```
+`yt-srt-gen` requires `openai-whisper`, but it doesn't ship it as a dependency to save up disk space when
+both packages are needed separately and installed via `pipx`.
 
 ## Usage
 
@@ -53,18 +49,3 @@ yt-srt-gen https://www.youtube.com/watch?v=dQw4w9WgXcQ -s sr -t en -w "--model s
 ```
 
 This will download the video, generate Spanish subtitles, and append English translations.
-
-## Dependencies
-
-* `yt-dlp` - for downloading YouTube videos.
-* `openai-whisper` - for automatic subtitle generation.
-* `googletrans` - for translating subtitles.
-* `tqdm` - for showing progress bars.
-
-## License
-
-This project is licensed under the GPL-3.0-or-later license.
-
-## Author
-
-Kirill Fertikov — [kirill.fertikov@gmail.com](mailto:kirill.fertikov@gmail.com)
